@@ -10,12 +10,6 @@ if (localStorage.getItem('location')) {
     $headerCityButton.textContent = localStorage.getItem('location');
 }
 
-$headerCityButton.addEventListener('click', () => {
-    const city = prompt('Укажите ваш город');
-    $headerCityButton.textContent = city;
-    localStorage.setItem('location', city);
-});
-
 // блок скрола
 
 const disableScroll = () => {
@@ -69,10 +63,10 @@ const getData = async () => {
     }
 };
 
-const getGoods = (callback, value) => {
+const getGoods = (callback, prop, value) => {
     getData().then(response => {
         if (value) {
-            callback(response.filter(item => item.category === value));
+            callback(response.filter(item => item[prop] === value));
         } else {
             callback(response);
         }
@@ -94,18 +88,18 @@ try {
 
         li.innerHTML = `
              <article class="good">
-                            <a class="good__link-img" href="card-good.html#${id}">
-                                <img class="good__img" src="goods-image/${preview}" alt="">
-                            </a>
-                            <div class="good__description">
-                                <p class="good__price">${cost} &#8381;</p>
-                                <h3 class="good__title">${brand} <span class="good__title__grey">/ ${name}</span></h3>
-                                ${sizes ?
+                <a class="good__link-img" href="card-good.html#${id}">
+                    <img class="good__img" src="goods-image/${preview}" alt="">
+                </a>
+                <div class="good__description">
+                    <p class="good__price">${cost} &#8381;</p>
+                    <h3 class="good__title">${brand} <span class="good__title__grey">/ ${name}</span></h3>
+                    ${sizes ?
                 `<p class="good__sizes">Размеры (RUS): <span class="good__sizes-list">${sizes.join(' ')}</span></p>` :
                 ''}
-                                <a class="good__link" href="card-good.html#${id}">Подробнее</a>
-                            </div>
-                        </article>
+                    <a class="good__link" href="card-good.html#${id}">Подробнее</a>
+                </div>
+            </article>
         `;
         return li;
     };
@@ -129,12 +123,84 @@ try {
     window.addEventListener('hashchange', () => {
         hash = location.hash.substring(1);
         createTitle(hash);
-        getGoods(renderGoodsList, hash);
+        getGoods(renderGoodsList, 'category', hash);
     });
 
     createTitle(hash);
-    getGoods(renderGoodsList, hash);
+    getGoods(renderGoodsList, 'category', hash);
     createCard(hash);
+
+} catch (err) {
+    console.warn(err);
+}
+
+//страница категорий
+
+try {
+
+} catch (err) {
+    console.warn(err);
+}
+
+//страница товара
+
+try {
+    if (!document.querySelector('.card-good')) {
+        throw 'This is not a card-good page';
+    }
+
+    const $cardGoodImage = document.querySelector('.card-good__image'),
+        $cardGoodBrand = document.querySelector('.card-good__brand'),
+        $cardGoodTitle = document.querySelector('.card-good__title'),
+        $cardGoodPrice = document.querySelector('.card-good__price'),
+        $cardGoodColor = document.querySelector('.card-good__color'),
+        $cardGoodSelectWrapper = document.querySelectorAll('.card-good__select__wrapper'),
+        $cardGoodColorList = document.querySelector('.card-good__color-list'),
+        $cardGoodSizes = document.querySelector('.card-good__sizes'),
+        $cardGoodSizesList = document.querySelector('.card-good__sizes-list'),
+        $ardGoodBuy = document.querySelector('.card-good__buy');
+
+    const generateList = data => data.reduce((acc, item, i) =>
+        acc + `<li class="card-good__select-item" data-id='${i}'>${item}</li>`, '');
+
+    const renderCardGood = ([{ cost, brand, name, sizes, color, photo }]) => {
+        $cardGoodImage.src = `goods-image/${photo}`;
+        $cardGoodImage.alt = `${brand} ${name}`;
+        $cardGoodBrand.textContent = brand;
+        $cardGoodTitle.textContent = name;
+        $cardGoodPrice.textContent = `${cost} ₽`;
+        if (color) {
+            $cardGoodColor.textContent = color[0];
+            $cardGoodColor.dataset.id = 0;
+            $cardGoodColorList.innerHTML = generateList(color);
+        } else {
+            $cardGoodColor.style.display = 'none';
+        }
+
+        if (sizes) {
+            $cardGoodSizes.textContent = sizes[0];
+            $cardGoodSizes.dataset.id = 0;
+            $cardGoodSizesList.innerHTML = generateList(sizes);
+        } else {
+            $cardGoodSizes.style.display = "none";
+        }
+    };
+
+    $cardGoodSelectWrapper.forEach(item => {
+        item.addEventListener('click', e => {
+            if (e.target.closest('.card-good__select')) {
+                e.target.classList.toggle('card-good__select__open');
+            }
+            if (e.target.closest('.card-good__select-item')) {
+                const $cardGoodSelect = item.querySelector('.card-good__select');
+                $cardGoodSelect.textContent = e.target.textContent;
+                $cardGoodSelect.dataset.id = e.target.dataset.id;
+                $cardGoodSelect.classList.remove('card-good__select__open');
+            }
+        });
+    });
+
+    getGoods(renderCardGood, 'id', hash);
 
 } catch (err) {
     console.warn(err);
@@ -150,3 +216,8 @@ $cartOverlay.addEventListener('click', e => {
     }
 });
 
+$headerCityButton.addEventListener('click', () => {
+    const city = prompt('Укажите ваш город');
+    $headerCityButton.textContent = city;
+    localStorage.setItem('location', city);
+});
